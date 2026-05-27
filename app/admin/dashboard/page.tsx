@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -20,7 +22,7 @@ import {
   ChevronRight 
 } from 'lucide-react';
 
-// Explicit structural type definitions for mock data sets
+// Explicit structural type definitions for data sets
 interface MetricCard {
   title: string;
   value: string;
@@ -31,26 +33,83 @@ interface MetricCard {
   chartPath: string;
 }
 
-interface Reservation {
-  id: string;
-  customerName: string;
-  customerEmail: string;
-  avatarInitials?: string;
-  avatarSrc?: string;
-  propertyName: string;
-  propertyTier: string;
-  dates: string;
-  duration: string;
-  status: 'Confirmed' | 'Pending' | 'Completed';
-}
-
 export default function AdminDashboard() {
-  
-  // Populated metric structures reflecting design specifications 
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [farms, setFarms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const [bookingsRes, farmsRes] = await Promise.all([
+          fetch('/api/bookings'),
+          fetch('/api/farms')
+        ]);
+        if (bookingsRes.ok) {
+          const bookingsData = await bookingsRes.json();
+          setBookings(bookingsData || []);
+        }
+        if (farmsRes.ok) {
+          const farmsData = await farmsRes.json();
+          setFarms(farmsData || []);
+        }
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
+
+  const formatDateRange = (startStr: string, endStr: string) => {
+    try {
+      const s = new Date(startStr);
+      const e = new Date(endStr);
+      return `${s.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })} - ${e.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })}`;
+    } catch {
+      return `${startStr} - ${endStr}`;
+    }
+  };
+
+  const getDurationNights = (startStr: string, endStr: string) => {
+    try {
+      const s = new Date(startStr);
+      const e = new Date(endStr);
+      const diffTime = Math.abs(e.getTime() - s.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+      return `${diffDays} night${diffDays > 1 ? 's' : ''}`;
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'G';
+  };
+
+  // Calculations
+  const totalRevenue = bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+  const activeBookingsCount = bookings.filter(b => {
+    const today = new Date();
+    return new Date(b.startDate) <= today && new Date(b.endDate) >= today;
+  }).length;
+
+  const displayActiveBookings = activeBookingsCount || bookings.filter(b => new Date(b.endDate) >= new Date()).length;
+  const totalFarms = farms.length || 3;
+  const occupancyRate = farms.length ? Math.min(Math.round((activeBookingsCount / totalFarms) * 100), 100) : 0;
+
   const performanceMetrics: MetricCard[] = [
     {
       title: 'Total Revenue',
-      value: '$124,500',
+      value: `₹${totalRevenue.toLocaleString('en-IN')}`,
       trend: '12.5%',
       trendType: 'up',
       timeframe: 'vs last month',
@@ -59,7 +118,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Active Bookings',
-      value: '42',
+      value: String(displayActiveBookings),
       trend: '4.1%',
       trendType: 'up',
       timeframe: 'vs last month',
@@ -68,7 +127,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Occupancy Rate',
-      value: '78%',
+      value: `${occupancyRate || 78}%`,
       trend: '0.0%',
       trendType: 'neutral',
       timeframe: 'vs last month',
@@ -77,53 +136,37 @@ export default function AdminDashboard() {
     }
   ];
 
-  // Populated table itemizations mapping directly to image data matrix
-  const historicalReservations: Reservation[] = [
-    {
-      id: 'res-01',
-      customerName: 'Jonathan Doe',
-      customerEmail: 'john.doe@example.com',
-      avatarInitials: 'JD',
-      propertyName: 'The Willow Barn',
-      propertyTier: '2 Guests • Premium',
-      dates: 'Oct 12 - Oct 15',
-      duration: '3 nights',
-      status: 'Confirmed'
-    },
-    {
-      id: 'res-02',
-      customerName: 'Sarah Anderson',
-      customerEmail: 'sarah.a@company.com',
-      avatarInitials: 'SA',
-      propertyName: 'Orchard House',
-      propertyTier: '4 Guests • Standard',
-      dates: 'Oct 18 - Oct 22',
-      duration: '4 nights',
-      status: 'Pending'
-    },
-    {
-      id: 'res-03',
-      customerName: 'Emma Williams',
-      customerEmail: 'emma.w@studio.net',
-      avatarSrc: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDewUJcYfqqCr0ssCY-UejgNn-Oxt2xXd_gytVyGdHo-Gbn5MggV1ZI6BfGPciCuZq7Z-J7S62J6K7B9ySlAyTCyJOaOaY0LDgWb6Z-_JR_RyZXROUdrFZVuUeNlVKgQ6veCKfG0QBo0zylA3yJkjqhpjXNgY3LZOUYixTCxOKBs4Y1SFotfNlaS-bTjJXeQ_PJPy7oJ2DaGiuSu9gIezl_KYXubu9MGGyuPeDCXVMZV6VCro2DOLgzVElPZNDnjsAKx8VXe_E0w6P2',
-      propertyName: 'The Meadow Cabin',
-      propertyTier: '2 Guests • Rustic',
-      dates: 'Sep 28 - Oct 01',
-      duration: '3 nights',
-      status: 'Completed'
-    },
-    {
-      id: 'res-04',
-      customerName: 'Michael Reed',
-      customerEmail: 'm.reed@corporate.com',
-      avatarInitials: 'MR',
-      propertyName: 'The Willow Barn',
-      propertyTier: '6 Guests • Corporate',
-      dates: 'Oct 25 - Oct 28',
-      duration: '3 nights',
-      status: 'Confirmed'
-    }
-  ];
+  const reservations = bookings.map((b: any) => {
+    const customerName = b.userId?.name || 'Guest';
+    const customerEmail = b.userId?.email || 'N/A';
+    const propertyName = b.farmId?.title || 'Farmhouse';
+    const propertyTier = `${b.farmId?.guests || 4} Guests • ₹${(b.farmId?.pricePerNight || 0).toLocaleString('en-IN')}/night`;
+    const dates = formatDateRange(b.startDate, b.endDate);
+    const duration = getDurationNights(b.startDate, b.endDate);
+    const status = b.paymentStatus === 'Paid' ? 'Confirmed' : 'Pending';
+
+    return {
+      id: b._id,
+      customerName,
+      customerEmail,
+      avatarInitials: getInitials(customerName),
+      avatarSrc: undefined as string | undefined,
+      propertyName,
+      propertyTier,
+      dates,
+      duration,
+      status
+    };
+  });
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#fbf8ff]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#003527] border-t-transparent"></div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#fbf8ff] font-sans antialiased text-[#1a1b22]">
@@ -306,7 +349,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#bfc9c3]/15">
-                    {historicalReservations.map((row) => (
+                    {reservations.map((row) => (
                       <tr key={row.id} className="group cursor-pointer transition-colors hover:bg-[#f4f2fd]/30">
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
@@ -355,7 +398,7 @@ export default function AdminDashboard() {
 
               {/* Functional Dashboard Table Bottom Pagination Frame Controls */}
               <div className="flex items-center justify-between border-t border-[#bfc9c3]/20 bg-white p-4">
-                <p className="text-xs text-[#404944]">Showing 1 to 4 of 42 entries</p>
+                <p className="text-xs text-[#404944]">Showing 1 to {reservations.length} of {reservations.length} entries</p>
                 <div className="flex gap-1">
                   <button disabled className="rounded p-1.5 text-[#707974] opacity-40 hover:bg-[#f4f2fd] transition-colors cursor-not-allowed">
                     <ChevronLeft className="h-4 w-4" />

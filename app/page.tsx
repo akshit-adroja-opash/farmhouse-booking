@@ -142,7 +142,6 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-black/10"></div>
         </div>
-        z
       </section>
 
       <section id="listings" className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-16">

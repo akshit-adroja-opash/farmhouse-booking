@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Farm from '@/models/Farm';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await connectDB();
   try {
-    const farm = await Farm.findById(params.id);
+    const { id } = await params;
+    const farm = await Farm.findById(id);
     if (!farm) {
       return NextResponse.json({ error: 'Farmhouse not found' }, { status: 404 });
     }
