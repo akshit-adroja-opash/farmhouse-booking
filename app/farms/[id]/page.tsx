@@ -57,7 +57,7 @@ export default function FarmDetailPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="max-w-4xl mx-auto pt-28 pb-6 px-6 grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
         <img src={farm.images[0] || 'https://via.placeholder.com/600x400'} alt={farm.title} className="w-full rounded-lg shadow" />
         <h1 className="text-3xl font-bold mt-4">{farm.title}</h1>

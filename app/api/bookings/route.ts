@@ -17,13 +17,12 @@ export async function POST(req: Request) {
       startDate,
       endDate,
       totalPrice,
-      paymentStatus: 'Paid' // Simulated instant payment confirmation for simplicity
+      paymentStatus: 'Paid' 
     });
 
     const farm = await Farm.findById(farmId);
     const user = await User.findById(userId);
 
-    // Trigger Orchestrated Async Notifications
     const templateData = {
       farmName: farm.title,
       startDate,
@@ -33,7 +32,6 @@ export async function POST(req: Request) {
 
     await sendBookingEmail(user.email, templateData);
     
-    // Notify User & Admin
     const confirmationText = `Hello ${user.name}, your stay at ${farm.title} from ${startDate} to ${endDate} is confirmed! Total: ₹${totalPrice}`;
     await sendWhatsAppNotification(process.env.ADMIN_PHONE_NUMBER!, `New Admin Alert: ${user.name} booked ${farm.title}.`);
 

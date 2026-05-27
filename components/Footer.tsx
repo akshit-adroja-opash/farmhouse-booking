@@ -16,8 +16,8 @@ const Logo = ({ className = "h-8 w-8 text-primary" }: { className?: string }) =>
 export default function Footer() {
   const pathname = usePathname();
 
-  // Do not render footer on admin routes
-  if (pathname?.startsWith('/admin')) {
+  // Do not render footer on admin or auth routes
+  if (pathname?.startsWith('/admin') || pathname === '/login' || pathname === '/register') {
     return null;
   }
 

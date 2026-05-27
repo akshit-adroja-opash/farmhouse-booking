@@ -19,8 +19,8 @@ export default function Navbar() {
   const { data: session } = useSession() || {};
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Do not render navbar on admin routes
-  if (pathname?.startsWith('/admin')) {
+  // Do not render navbar on admin or auth routes
+  if (pathname?.startsWith('/admin') || pathname === '/login' || pathname === '/register') {
     return null;
   }
 
@@ -49,25 +49,23 @@ export default function Navbar() {
           </Link>
           <Link 
             className={`text-sm font-semibold transition-all ${
-              pathname === '/experiences' 
+              pathname === '/farms' 
                 ? 'text-[#003527] border-b-2 border-[#003527] pb-1' 
                 : 'text-[#404944] hover:text-[#003527]'
             }`} 
-            href="#"
+            href="/farms"
           >
-            Experiences
+            Farmhouses
           </Link>
           <Link 
-            className="text-sm font-semibold text-[#404944] hover:text-[#003527] transition-all" 
-            href="#"
+            className={`text-sm font-semibold transition-all ${
+              pathname === '/dashboard/bookings' 
+                ? 'text-[#003527] border-b-2 border-[#003527] pb-1' 
+                : 'text-[#404944] hover:text-[#003527]'
+            }`} 
+            href="/dashboard/bookings"
           >
-            Journal
-          </Link>
-          <Link 
-            className="text-sm font-semibold text-[#404944] hover:text-[#003527] transition-all" 
-            href="#"
-          >
-            About
+            Bookings (Mock)
           </Link>
           {session && (
             <Link 
@@ -93,10 +91,6 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          <Link href="/register" className="hidden lg:block text-sm font-semibold text-[#003527] hover:underline">
-            List your Estate
-          </Link>
-          
           {session ? (
             <div className="flex items-center gap-3">
               <span className="hidden lg:inline text-xs font-semibold text-[#404944]">
@@ -149,24 +143,17 @@ export default function Navbar() {
           </Link>
           <Link 
             className="text-sm font-semibold text-[#404944] hover:text-[#003527] py-1" 
-            href="#" 
+            href="/farms" 
             onClick={() => setMobileMenuOpen(false)}
           >
-            Experiences
+            Farmhouses
           </Link>
           <Link 
             className="text-sm font-semibold text-[#404944] hover:text-[#003527] py-1" 
-            href="#" 
+            href="/dashboard/bookings" 
             onClick={() => setMobileMenuOpen(false)}
           >
-            Journal
-          </Link>
-          <Link 
-            className="text-sm font-semibold text-[#404944] hover:text-[#003527] py-1" 
-            href="#" 
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            About
+            Bookings (Mock)
           </Link>
           {session && (
             <Link 

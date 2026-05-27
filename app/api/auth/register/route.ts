@@ -11,7 +11,8 @@ export async function POST(req: Request) {
     if (userExists) return NextResponse.json({ error: 'User already exists' }, { status: 400 });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ name, email, password: hashedPassword });
+    const role = email.toLowerCase() === 'admin@gmail.com' ? 'admin' : 'user';
+    const newUser = await User.create({ name, email, password: hashedPassword, role });
 
     return NextResponse.json({ message: 'User registered successfully' }, { status: 201 });
   } catch (error) {

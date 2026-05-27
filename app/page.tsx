@@ -4,7 +4,6 @@ import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// High-fidelity Logo matching the mockup branding
 const Logo = ({ className = "h-8 w-8 text-primary" }: { className?: string }) => (
   <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <rect width="100" height="100" rx="22" fill="#003527" />
@@ -13,7 +12,6 @@ const Logo = ({ className = "h-8 w-8 text-primary" }: { className?: string }) =>
   </svg>
 );
 
-// High-fidelity Mock farms matching the template visual specifications exactly
 const MOCK_FARMS = [
   {
     _id: '1',
@@ -62,12 +60,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Search Inputs State
   const [searchLocation, setSearchLocation] = useState('');
   const [searchGuests, setSearchGuests] = useState('');
   const [searchCheckIn, setSearchCheckIn] = useState('');
   
-  // Filtered farm list
   const [filteredFarms, setFilteredFarms] = useState<any[]>([]);
 
   useEffect(() => {
@@ -77,7 +73,6 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json();
           if (data && data.length > 0) {
-            // Map db attributes to mock attributes if needed
             const formattedFarms = data.map((farm: any) => ({
               ...farm,
               rating: farm.rating || 4.7 + Math.random() * 0.3,
@@ -107,7 +102,6 @@ export default function Home() {
     fetchFarms();
   }, []);
 
-  // Handle live filtering by search terms
   useEffect(() => {
     let result = farms;
 
@@ -139,7 +133,6 @@ export default function Home() {
 
   return (
     <div className="bg-background text-on-surface pt-20">
-      {/* Hero Section */}
       <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center bg-surface-variant">
         <div className="absolute inset-0 z-0">
           <img
@@ -149,79 +142,9 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-black/10"></div>
         </div>
-        <div className="relative z-10 w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-          <div className="max-w-4xl bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-xl mx-auto">
-            <h1 className="font-display-lg text-4xl text-gray-900 mb-8 text-center tracking-tight font-serif">
-              Find Your Rural Escape
-            </h1>
-            <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-[1.5fr_1.2fr_1fr_auto] gap-4 items-end">
-              {/* Location */}
-              <div className="flex flex-col">
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Location</label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                    location_on
-                  </span>
-                  <input
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm text-gray-900 placeholder:text-gray-400"
-                    placeholder="Where to?"
-                    type="text"
-                    value={searchLocation}
-                    onChange={(e) => setSearchLocation(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Check-in */}
-              <div className="flex flex-col">
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Check-in</label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                    calendar_today
-                  </span>
-                  <input
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm text-gray-900 placeholder:text-gray-400"
-                    placeholder="Add dates"
-                    type="text"
-                    value={searchCheckIn}
-                    onChange={(e) => setSearchCheckIn(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Guests */}
-              <div className="flex flex-col">
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Guests</label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                    group
-                  </span>
-                  <input
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm text-gray-900 placeholder:text-gray-400"
-                    placeholder="Add guests"
-                    type="number"
-                    min="1"
-                    value={searchGuests}
-                    onChange={(e) => setSearchGuests(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <button
-                className="bg-[#003527] hover:bg-[#003527]/90 text-white font-semibold py-3 px-6 rounded-md transition-colors h-[46px] flex items-center justify-center gap-2 text-sm whitespace-nowrap"
-                type="submit"
-              >
-                <span className="material-symbols-outlined text-lg">
-                  search
-                </span>
-                Search Stays
-              </button>
-            </form>
-          </div>
-        </div>
+        z
       </section>
 
-      {/* Featured Section */}
       <section id="listings" className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-16">
         <div className="mb-10 flex justify-between items-end">
           <div>
@@ -266,14 +189,12 @@ export default function Home() {
                   href={`/farms/${farm._id}`}
                   className="bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm hover-lift group cursor-pointer flex flex-col h-full"
                 >
-                  {/* Image display */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden">
                     <img
                       src={farm.images?.[0] || 'https://via.placeholder.com/600x400?text=Premium+Farmhouse'}
                       alt={farm.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    {/* Rating Badge */}
                     <div className="absolute top-4 right-4 bg-white/95 px-3 py-1 rounded-full border border-gray-100 flex items-center gap-1">
                       <span className="material-symbols-outlined text-yellow-500 text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                         star
@@ -284,7 +205,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Details */}
                   <div className="p-6 flex flex-col flex-grow">
                     <h3 className="font-display-lg text-lg text-gray-900 mb-1 font-serif">
                       {farm.title}
@@ -295,7 +215,6 @@ export default function Home() {
                       <span>{farm.location}</span>
                     </div>
 
-                    {/* Card Footer: Price & Category */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
                       <p className="text-gray-900 font-bold">
                         {formattedPrice} <span className="text-gray-500 font-normal">/ night</span>
@@ -312,7 +231,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* Why EstateStay (Brand Philosophy) */}
       <section className="bg-surface-container-low py-16 border-t border-outline-variant/30">
         <div className="max-w-container-max mx-auto px-margin-desktop">
           <div className="text-center max-w-2xl mx-auto mb-12">
@@ -358,7 +276,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
       <section className="bg-[#003527] text-on-primary py-16 relative overflow-hidden mb-12">
         <div className="absolute inset-0 z-0">
           <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] rounded-full bg-[#064e3b] opacity-20 blur-3xl"></div>
