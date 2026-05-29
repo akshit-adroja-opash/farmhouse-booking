@@ -194,7 +194,8 @@ export default function FarmDetailPage() {
 
     async function fetchFarmBookings() {
       try {
-        const farmId = farm._id || farm.id;
+        const farmId = farm?._id || (farm as any)?.id;
+        if (!farmId) return;
         const res = await fetch(`/api/bookings?farmId=${farmId}`);
         if (res.ok) {
           const data = await res.json();
@@ -207,6 +208,53 @@ export default function FarmDetailPage() {
 
     fetchFarmBookings();
   }, [farm]);
+
+  useEffect(() => {
+    async function checkIsSaved() {
+      if (session?.user && farm) {
+        try {
+          const userId = (session.user as any).id;
+          const res = await fetch(`/api/users/favorites?userId=${userId}`);
+          if (res.ok) {
+            const favoritesList = await res.json();
+            const saved = favoritesList.some((fav: any) => fav._id === farm._id);
+            setIsSaved(saved);
+          }
+        } catch (err) {
+          console.error('Failed to fetch user favorites:', err);
+        }
+      }
+    }
+    checkIsSaved();
+  }, [session, farm]);
+
+  const handleSaveToggle = async () => {
+    if (!session?.user) {
+      alert('Please sign in to save farmhouses to your favorites.');
+      router.push('/login');
+      return;
+    }
+    if (!farm) return;
+    try {
+      const userId = (session.user as any).id;
+      const res = await fetch('/api/users/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, farmId: farm._id })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const saved = data.favorites.includes(farm._id);
+        setIsSaved(saved);
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Failed to toggle favorite.');
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      alert('Failed to update favorites.');
+    }
+  };
 
   if (loading) {
     return (
@@ -372,7 +420,7 @@ export default function FarmDetailPage() {
                 <span>Share</span>
               </button>
               <button 
-                onClick={() => setIsSaved(!isSaved)}
+                onClick={handleSaveToggle}
                 className="flex items-center space-x-2 text-sm font-semibold underline transition-colors hover:text-[#003527]"
               >
                 <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />

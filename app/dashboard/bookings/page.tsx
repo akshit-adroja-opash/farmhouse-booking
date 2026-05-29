@@ -4,13 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Download, HelpCircle, ArrowRight } from 'lucide-react';
+import { Calendar, Download, HelpCircle, ArrowRight, Heart, Star, MapPin, Users, Bath, Home } from 'lucide-react';
 
 interface Farm {
   _id: string;
   title: string;
   images?: string[];
   pricePerNight: number;
+  location?: string;
+  rating?: number;
+  guests?: number;
+  bedrooms?: number;
+  baths?: number;
+  category?: string;
 }
 
 interface Booking {
@@ -27,6 +33,7 @@ export default function BookingsDashboardPage() {
   const router = useRouter();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [favorites, setFavorites] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'saved'>('upcoming');
 
@@ -40,7 +47,7 @@ export default function BookingsDashboardPage() {
     }
 
     if (status === 'authenticated' && session?.user) {
-      const fetchBookings = async () => {
+      const fetchDashboardData = async () => {
         try {
           const userId = (session.user as any)?.id;
 
@@ -50,27 +57,55 @@ export default function BookingsDashboardPage() {
             return;
           }
 
-          const res = await fetch(`/api/bookings?userId=${userId}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
+          // Fetch bookings and favorites in parallel
+          const [resBookings, resFavorites] = await Promise.all([
+            fetch(`/api/bookings?userId=${userId}`),
+            fetch(`/api/users/favorites?userId=${userId}`)
+          ]);
 
-          if (!res.ok) throw new Error('Failed to fetch bookings');
+          if (resBookings.ok) {
+            const data = await resBookings.json();
+            setBookings(data || []);
+          }
 
-          const data = await res.json();
-          setBookings(data || []);
+          if (resFavorites.ok) {
+            const data = await resFavorites.json();
+            setFavorites(data || []);
+          }
         } catch (err) {
-          console.error('Error fetching bookings:', err);
+          console.error('Error fetching dashboard data:', err);
         } finally {
           setLoading(false);
         }
       };
 
-      fetchBookings();
+      fetchDashboardData();
     }
   }, [session, status, router]);
+
+  const handleToggleFavorite = async (farmId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!session?.user) return;
+    try {
+      const userId = (session.user as any).id;
+      const res = await fetch('/api/users/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, farmId })
+      });
+      if (res.ok) {
+        // Refresh favorites list
+        const resFavs = await fetch(`/api/users/favorites?userId=${userId}`);
+        if (resFavs.ok) {
+          const data = await resFavs.json();
+          setFavorites(data || []);
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling favorite on dashboard:', err);
+    }
+  };
 
   const formatDateRange = (startStr: string, endStr: string) => {
     try {
@@ -367,109 +402,213 @@ export default function BookingsDashboardPage() {
 
           {/* Bookings List */}
           <div className="flex flex-col gap-6 mt-2">
-            {displayedBookings.length === 0 ? (
-              <div className="text-center py-16 border border-dashed border-[#bfc9c3]/40 rounded-2xl bg-white shadow-sm flex flex-col items-center">
-                <p className="text-sm text-[#707974] font-semibold mb-6">
-                  You do not have any {activeTab === 'upcoming' ? 'upcoming' : activeTab === 'past' ? 'past' : 'saved'} bookings yet.
-                </p>
-                <Link
-                  href="/farms"
-                  className="flex items-center justify-center gap-2 bg-[#00a877] hover:bg-[#009669] text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-md shadow-[#00a877]/10 transition-all active:scale-[0.98]"
-                >
-                  <span>Explore Farmhouses</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            ) : (
-              displayedBookings.map((booking) => {
-                const farm = booking.farmId;
-                if (!farm) return null;
-
-                const image =
-                  farm.images && farm.images.length > 0
-                    ? farm.images[0]
-                    : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80';
-
-                return (
-                  <article
-                    key={booking._id}
-                    className="rounded-2xl border border-[#bfc9c3]/20 bg-white flex flex-col md:flex-row overflow-hidden shadow-sm shadow-[#064e3b]/3 hover:shadow-md transition-all"
+            {activeTab === 'saved' ? (
+              favorites.length === 0 ? (
+                <div className="text-center py-16 border border-dashed border-[#bfc9c3]/40 rounded-2xl bg-white shadow-sm flex flex-col items-center">
+                  <p className="text-sm text-[#707974] font-semibold mb-6">
+                    You do not have any saved farmhouses yet.
+                  </p>
+                  <Link
+                    href="/farms"
+                    className="flex items-center justify-center gap-2 bg-[#00a877] hover:bg-[#009669] text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-md shadow-[#00a877]/10 transition-all active:scale-[0.98]"
                   >
-                    {/* Stay Image */}
-                    <div className="md:w-[240px] h-48 md:h-auto overflow-hidden">
-                      <img
-                        src={image}
-                        alt={farm.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-
-                    {/* Booking metadata */}
-                    <div className="p-6 flex flex-col justify-between flex-grow gap-6">
-                      
-                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold bg-[#e6f4ea] text-[#0f766e] border border-[#a7f3d0]/30 rounded-full lowercase mb-2">
-                            Stay ID: {booking._id.slice(-6)}
-                          </span>
-                          <h3 className="font-serif text-xl font-bold text-[#1a1b22]">
-                            {farm.title}
-                          </h3>
-                          <p className="text-xs font-bold text-gray-500 mt-2 flex items-center gap-1.5">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {formatDateRange(booking.startDate, booking.endDate)}
-                          </p>
-                        </div>
-
-                        <span
-                          className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full lowercase ${
-                            booking.paymentStatus === 'Paid'
-                              ? 'bg-[#e6f4ea] text-[#0f766e]'
-                              : 'bg-amber-50 text-amber-700'
-                          }`}
-                        >
-                          {booking.paymentStatus === 'Paid' ? 'confirmed' : 'pending'}
-                        </span>
-                      </div>
-
-                      {/* Footer Actions Row */}
-                      <div className="flex flex-col sm:flex-row sm:items-end justify-between border-t border-[#bfc9c3]/15 pt-4 gap-4">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#707974]">
-                            Total Payment
-                          </p>
-                          <p className="text-2xl font-serif font-bold text-[#003527] mt-0.5">
-                            ₹{booking.totalPrice.toLocaleString('en-IN')}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2.5 self-start sm:self-auto">
+                    <span>Explore Farmhouses</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {favorites.map((farm) => {
+                    const image = farm.images?.[0] || 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80';
+                    return (
+                      <div
+                        key={farm._id}
+                        className="bg-white rounded-2xl overflow-hidden border border-[#bfc9c3]/20 shadow-sm hover:shadow-md transition-all flex flex-col h-full relative group"
+                      >
+                        {/* Image Area */}
+                        <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
+                          <img
+                            src={image}
+                            alt={farm.title}
+                            className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                          />
+                          {/* Heart Button */}
                           <button
-                            onClick={() => handleDownloadReceipt(booking)}
-                            disabled={booking.paymentStatus !== 'Paid'}
-                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+                            onClick={(e) => handleToggleFavorite(farm._id, e)}
+                            className="absolute top-4 right-4 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-white transition-colors z-10"
+                            aria-label="Remove from saved stays"
                           >
-                            <Download className="h-3.5 w-3.5" />
-                            <span>Receipt</span>
+                            <Heart className="h-4.5 w-4.5 fill-red-500 text-red-500" />
                           </button>
-
-                          <button className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors">
-                            <HelpCircle className="h-3.5 w-3.5" />
-                            <span>Support</span>
-                          </button>
-
-                          {booking.paymentStatus !== 'Paid' && (
-                            <button className="bg-[#00a877] hover:bg-[#009669] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-[#00a877]/10 transition-colors">
-                              Pay Now
-                            </button>
+                          {/* Category */}
+                          {farm.category && (
+                            <span className="absolute bottom-4 left-4 inline-block px-2.5 py-0.5 text-[10px] font-bold bg-[#003527]/80 backdrop-blur-sm text-white rounded-full uppercase tracking-wider">
+                              {farm.category}
+                            </span>
                           )}
                         </div>
+
+                        {/* Card Details */}
+                        <div className="p-6 flex flex-col flex-grow gap-4">
+                          <div>
+                            <div className="flex justify-between items-start gap-2">
+                              <h3 className="font-serif text-xl font-bold text-[#1a1b22] line-clamp-1">
+                                {farm.title}
+                              </h3>
+                              <span className="flex items-center gap-1 text-xs font-bold text-gray-700 whitespace-nowrap mt-1">
+                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                {farm.rating?.toFixed(1) || '4.8'}
+                              </span>
+                            </div>
+                            <p className="mt-1 flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-wide">
+                              <MapPin className="h-3.5 w-3.5 text-[#00a877]" />
+                              {farm.location || 'Location unavailable'}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 text-[11px] font-bold text-gray-500">
+                            <span className="flex items-center justify-center gap-1 rounded-xl bg-gray-50 px-2 py-2">
+                              <Users className="h-4 w-4 text-gray-400" />
+                              {farm.guests || 6} guests
+                            </span>
+                            <span className="flex items-center justify-center gap-1 rounded-xl bg-gray-50 px-2 py-2">
+                              <Home className="h-4 w-4 text-gray-400" />
+                              {farm.bedrooms || 3} beds
+                            </span>
+                            <span className="flex items-center justify-center gap-1 rounded-xl bg-gray-50 px-2 py-2">
+                              <Bath className="h-4 w-4 text-gray-400" />
+                              {farm.baths || 2} baths
+                            </span>
+                          </div>
+
+                          <div className="mt-auto pt-4 border-t border-[#bfc9c3]/15 flex items-center justify-between gap-4">
+                            <div>
+                              <p className="font-serif text-lg font-bold text-[#003527]">
+                                ₹{farm.pricePerNight?.toLocaleString('en-IN')}
+                                <span className="font-sans text-xs font-semibold text-gray-400"> / night</span>
+                              </p>
+                            </div>
+                            <Link
+                              href={`/farms/${farm._id}`}
+                              className="rounded-xl border border-[#00a877] px-4 py-2 text-xs font-bold text-[#00a877] hover:bg-[#e6f4ea]/30 transition-colors"
+                            >
+                              View Detail
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ) : (
+              displayedBookings.length === 0 ? (
+                <div className="text-center py-16 border border-dashed border-[#bfc9c3]/40 rounded-2xl bg-white shadow-sm flex flex-col items-center">
+                  <p className="text-sm text-[#707974] font-semibold mb-6">
+                    You do not have any {activeTab} bookings yet.
+                  </p>
+                  <Link
+                    href="/farms"
+                    className="flex items-center justify-center gap-2 bg-[#00a877] hover:bg-[#009669] text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-md shadow-[#00a877]/10 transition-all active:scale-[0.98]"
+                  >
+                    <span>Explore Farmhouses</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ) : (
+                displayedBookings.map((booking) => {
+                  const farm = booking.farmId;
+                  if (!farm) return null;
+
+                  const image =
+                    farm.images && farm.images.length > 0
+                      ? farm.images[0]
+                      : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80';
+
+                  return (
+                    <article
+                      key={booking._id}
+                      className="rounded-2xl border border-[#bfc9c3]/20 bg-white flex flex-col md:flex-row overflow-hidden shadow-sm shadow-[#064e3b]/3 hover:shadow-md transition-all"
+                    >
+                      {/* Stay Image */}
+                      <div className="md:w-[240px] h-48 md:h-auto overflow-hidden">
+                        <img
+                          src={image}
+                          alt={farm.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
                       </div>
 
-                    </div>
-                  </article>
-                );
-              })
+                      {/* Booking metadata */}
+                      <div className="p-6 flex flex-col justify-between flex-grow gap-6">
+                        
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold bg-[#e6f4ea] text-[#0f766e] border border-[#a7f3d0]/30 rounded-full lowercase mb-2">
+                              Stay ID: {booking._id.slice(-6)}
+                            </span>
+                            <h3 className="font-serif text-xl font-bold text-[#1a1b22]">
+                              {farm.title}
+                            </h3>
+                            <p className="text-xs font-bold text-gray-500 mt-2 flex items-center gap-1.5">
+                              <Calendar className="h-4 w-4 text-gray-400" />
+                              {formatDateRange(booking.startDate, booking.endDate)}
+                            </p>
+                          </div>
+
+                          <span
+                            className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full lowercase ${
+                              booking.paymentStatus === 'Paid'
+                                ? 'bg-[#e6f4ea] text-[#0f766e]'
+                                : 'bg-amber-50 text-amber-700'
+                            }`}
+                          >
+                            {booking.paymentStatus === 'Paid' ? 'confirmed' : 'pending'}
+                          </span>
+                        </div>
+
+                        {/* Footer Actions Row */}
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between border-t border-[#bfc9c3]/15 pt-4 gap-4">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-[#707974]">
+                              Total Payment
+                            </p>
+                            <p className="text-2xl font-serif font-bold text-[#003527] mt-0.5">
+                              ₹{booking.totalPrice.toLocaleString('en-IN')}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2.5 self-start sm:self-auto">
+                            <button
+                              onClick={() => handleDownloadReceipt(booking)}
+                              disabled={booking.paymentStatus !== 'Paid'}
+                              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              <span>Receipt</span>
+                            </button>
+
+                            <Link 
+                              href="/support"
+                              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                              <HelpCircle className="h-3.5 w-3.5" />
+                              <span>Support</span>
+                            </Link>
+
+                            {booking.paymentStatus !== 'Paid' && (
+                              <button className="bg-[#00a877] hover:bg-[#009669] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-[#00a877]/10 transition-colors">
+                                Pay Now
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+                    </article>
+                  );
+                })
+              )
             )}
           </div>
         </section>

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { 
   Search, 
   MapPin, 
@@ -158,6 +159,8 @@ const ALL_AMENITIES = [
 function StaysList() {
   const searchParams = useSearchParams();
   const initialLocation = searchParams?.get('location') || '';
+  const { data: session } = useSession() || {};
+  const router = useRouter();
 
   const [farms, setFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -194,7 +197,6 @@ function StaysList() {
           const data = await res.json();
           if (data && data.length > 0) {
             const formatted = data.map((farm: any) => {
-              // Construct a realistic reviews count and acres
               const cleanTitle = farm.title || 'Premium Farmhouse';
               const cleanRating = farm.rating || (4.5 + Math.random() * 0.5);
               const cleanAcres = farm.acres || Math.round((farm.pricePerNight / 1000) + (farm.bedrooms || 1));
@@ -210,11 +212,11 @@ function StaysList() {
               };
             });
 
-            // Merge so we always have the 8 specific mock farmhouses from the screenshot
-            const merged = [...MOCK_FARMS];
-            formatted.forEach((f: any) => {
-              if (!merged.some(m => m.title.toLowerCase() === f.title.toLowerCase())) {
-                merged.push(f);
+            // Merge: prioritize database records, append any mock properties not in database
+            const merged = [...formatted];
+            MOCK_FARMS.forEach((m: any) => {
+              if (!merged.some(f => f.title.toLowerCase() === m.title.toLowerCase())) {
+                merged.push(m);
               }
             });
             setFarms(merged);
@@ -234,12 +236,50 @@ function StaysList() {
     fetchFarms();
   }, []);
 
-  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+  useEffect(() => {
+    async function fetchFavorites() {
+      if (session?.user) {
+        try {
+          const userId = (session.user as any).id;
+          const res = await fetch(`/api/users/favorites?userId=${userId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFavorites(data.map((fav: any) => fav._id));
+          }
+        } catch (err) {
+          console.error('Failed to fetch favorites:', err);
+        }
+      }
+    }
+    fetchFavorites();
+  }, [session]);
+
+  const toggleFavorite = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setFavorites(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+    if (!session?.user) {
+      alert('Please sign in to save farmhouses to your favorites.');
+      router.push('/login');
+      return;
+    }
+    try {
+      const userId = (session.user as any).id;
+      const res = await fetch('/api/users/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, farmId: id })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavorites(data.favorites);
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Failed to toggle favorite.');
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      alert('Failed to update favorites.');
+    }
   };
 
   const toggleAmenity = (amenity: string) => {

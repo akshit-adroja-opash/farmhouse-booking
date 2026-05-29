@@ -41,10 +41,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return null;
   }
 
-  const menuItems = [
+  interface MenuItem {
+    href: string;
+    icon: React.ComponentType<any>;
+    label: string;
+    badge?: string;
+  }
+
+  const menuItems: MenuItem[] = [
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/admin/users', icon: Users, label: 'Users', badge: '245' },
-    { href: '/admin/properties', icon: Home, label: 'Properties', badge: '8' },
+    { href: '/admin/users', icon: Users, label: 'Users' },
+    { href: '/admin/properties', icon: Home, label: 'Properties' },
     { href: '/admin/reservations', icon: CalendarDays, label: 'Bookings' },
     { href: '/admin/financials', icon: CreditCard, label: 'Revenue' },
     { href: '/settings', icon: Settings, label: 'Settings' },

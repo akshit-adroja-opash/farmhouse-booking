@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -19,14 +21,21 @@ export async function POST(req: Request) {
                           process.env.CLOUDINARY_CLOUD_NAME.startsWith('your_');
 
     if (isPlaceholder) {
-      const mockImages = [
-        'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=1200&q=80'
-      ];
-      const randomMockImage = mockImages[Math.floor(Math.random() * mockImages.length)];
-      return NextResponse.json({ url: randomMockImage }, { status: 200 });
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const uploadDir = join(process.cwd(), 'public', 'uploads');
+      try {
+        await mkdir(uploadDir, { recursive: true });
+      } catch (err) {
+        // Directory already exists or was created concurrently
+      }
+
+      const uniqueName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const filePath = join(uploadDir, uniqueName);
+      await writeFile(filePath, buffer);
+
+      return NextResponse.json({ url: `/uploads/${uniqueName}` }, { status: 200 });
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -41,6 +50,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: uploadResponse.secure_url }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Cloudinary upload failed' }, { status: 500 });
+    console.error('Upload error:', error);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

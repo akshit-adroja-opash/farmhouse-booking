@@ -7,11 +7,7 @@ import {
   Phone, 
   Mail, 
   MapPin, 
-  Clock, 
-  Smartphone, 
-  Camera, 
-  Compass, 
-  Briefcase 
+  Clock 
 } from 'lucide-react';
 
 const Logo = () => (
@@ -49,20 +45,6 @@ export default function Footer() {
             <p className="text-xs text-gray-400 font-medium leading-relaxed">
               Discover unique farmhouse experiences across India. Connect with nature, enjoy rural hospitality, and create unforgettable memories.
             </p>
-            <div className="flex gap-2.5 pt-2">
-              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
-                <Smartphone className="h-4.5 w-4.5" />
-              </span>
-              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
-                <Camera className="h-4.5 w-4.5" />
-              </span>
-              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
-                <Compass className="h-4.5 w-4.5" />
-              </span>
-              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
-                <Briefcase className="h-4.5 w-4.5" />
-              </span>
-            </div>
           </div>
 
           {/* Quick Links */}

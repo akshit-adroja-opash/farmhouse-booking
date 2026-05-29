@@ -67,9 +67,9 @@ const MOCK_FARMS = [
 ];
 
 const DESTINATIONS = [
-  { name: 'Manali', state: 'Himachal Pradesh', count: 12, img: 'https://images.unsplash.com/photo-1626621340025-ee97ef3550e2?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Manali', state: 'Himachal Pradesh', count: 12, img: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=400&q=80' },
   { name: 'Goa', state: 'Goa', count: 18, img: 'https://images.unsplash.com/photo-1540206395-68808572332f?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Rishikesh', state: 'Uttarakhand', count: 10, img: 'https://images.unsplash.com/photo-1614082242765-7c98cdc0d2df?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Rishikesh', state: 'Uttarakhand', count: 10, img: 'https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=400&q=80' },
   { name: 'Munnar', state: 'Kerala', count: 15, img: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=400&q=80' },
   { name: 'Panchgani', state: 'Maharashtra', count: 8, img: 'https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?auto=format&fit=crop&w=400&q=80' },
   { name: 'Jaisalmer', state: 'Rajasthan', count: 6, img: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=400&q=80' }
@@ -90,7 +90,6 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json();
           if (data && data.length > 0) {
-            // Keep default properties at top, append others
             const formattedFarms = data.map((farm: any) => ({
               ...farm,
               rating: farm.rating || 4.5 + Math.random() * 0.5,
@@ -100,11 +99,11 @@ export default function Home() {
               category: farm.category || 'farmhouse',
               amenities: farm.amenities || ['WiFi', 'Kitchen']
             }));
-            // Merge with mock properties to ensure we always have the specific ones
-            const merged = [...MOCK_FARMS];
-            formattedFarms.forEach((f: any) => {
-              if (!merged.some(m => m.title.toLowerCase() === f.title.toLowerCase())) {
-                merged.push(f);
+            // Merge: prioritize database records, append any mock properties not in database
+            const merged = [...formattedFarms];
+            MOCK_FARMS.forEach((m: any) => {
+              if (!merged.some(f => f.title.toLowerCase() === m.title.toLowerCase())) {
+                merged.push(m);
               }
             });
             setFarms(merged);
@@ -124,6 +123,24 @@ export default function Home() {
     fetchFarms();
   }, []);
 
+  useEffect(() => {
+    async function fetchFavorites() {
+      if (session?.user) {
+        try {
+          const userId = (session.user as any).id;
+          const res = await fetch(`/api/users/favorites?userId=${userId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFavorites(data.map((fav: any) => fav._id));
+          }
+        } catch (err) {
+          console.error('Failed to fetch favorites:', err);
+        }
+      }
+    }
+    fetchFavorites();
+  }, [session]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchLocation.trim()) {
@@ -133,12 +150,32 @@ export default function Home() {
     }
   };
 
-  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+  const toggleFavorite = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setFavorites(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+    if (!session?.user) {
+      alert('Please sign in to save farmhouses to your favorites.');
+      router.push('/login');
+      return;
+    }
+    try {
+      const userId = (session.user as any).id;
+      const res = await fetch('/api/users/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, farmId: id })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavorites(data.favorites);
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Failed to toggle favorite.');
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      alert('Failed to update favorites.');
+    }
   };
 
   return (

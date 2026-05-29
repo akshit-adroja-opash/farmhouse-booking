@@ -9,7 +9,6 @@ import {
   Menu, 
   X, 
   ShieldAlert, 
-  Bell, 
   ChevronDown, 
   Home, 
   Compass,
@@ -120,15 +119,9 @@ export default function Navbar() {
           )}
         </nav>
 
-        {/* Actions (Bell, User profile pill) */}
+        {/* Actions (User profile pill) */}
         <div className="flex items-center gap-4">
           
-          {/* Notification Bell */}
-          <button className="relative rounded-full p-2 text-[#404944] hover:bg-gray-100 transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#10b981] border border-white"></span>
-          </button>
-
           {/* User Profile / Login */}
           {session ? (
             <div className="relative border-l border-gray-200 pl-4" ref={dropdownRef}>

@@ -30,7 +30,7 @@ export default function AddPropertyWizardPage() {
   
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   
-  const [imageUrl, setImageUrl] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -48,21 +48,28 @@ export default function AddPropertyWizardPage() {
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setImageUrl(data.url);
-      } else {
-        alert('Failed to upload image. Please try again.');
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          newUrls.push(data.url);
+        } else {
+          alert(`Failed to upload ${file.name}. Please try again.`);
+        }
+      }
+      if (newUrls.length > 0) {
+        setImages(prev => [...prev, ...newUrls]);
       }
     } catch (err) {
       console.error(err);
@@ -103,7 +110,7 @@ export default function AddPropertyWizardPage() {
           bedrooms: Number(bedrooms),
           baths: Number(baths),
           amenities: selectedAmenities,
-          images: imageUrl ? [imageUrl] : ['https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80'],
+          images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80'],
         }),
       });
 
@@ -341,31 +348,44 @@ export default function AddPropertyWizardPage() {
             {/* STEP 4: PHOTOS */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <h3 className="font-serif text-xl text-[#1a1b22] pb-2 border-b border-[#bfc9c3]/30 mb-6">
-                  Property Cover Photo
-                </h3>
+                <div className="pb-2 border-b border-[#bfc9c3]/30 flex justify-between items-center mb-6">
+                  <h3 className="font-serif text-xl text-[#1a1b22]">
+                    Property Photos
+                  </h3>
+                  <span className="text-xs font-semibold text-[#707974]">
+                    {images.length} {images.length === 1 ? 'photo' : 'photos'} uploaded
+                  </span>
+                </div>
+
+                {images.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                    {images.map((url, idx) => (
+                      <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-[#eeedf7] group shadow-sm">
+                        <img src={url} alt={`Property photo ${idx + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => setImages(prev => prev.filter((_, i) => i !== idx))}
+                            className="bg-red-600 text-white rounded-lg px-2.5 py-1 text-xs font-bold hover:bg-red-700 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        {idx === 0 && (
+                          <span className="absolute top-2 left-2 bg-[#003527] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                            Cover
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#bfc9c3] rounded-xl p-8 bg-[#fbf8ff] transition-all hover:border-[#003527]">
-                  {imageUrl ? (
-                    <div className="w-full space-y-4">
-                      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border">
-                        <img src={imageUrl} alt="Uploaded cover preview" className="w-full h-full object-cover" />
-                      </div>
-                      <p className="text-xs text-green-700 font-semibold flex items-center justify-center gap-1">
-                        <Sparkles className="h-4 w-4" /> Cover image successfully uploaded!
-                      </p>
-                      <button 
-                        type="button" 
-                        onClick={() => setImageUrl('')}
-                        className="text-xs text-red-600 font-semibold hover:underline block mx-auto"
-                      >
-                        Change Photo
-                      </button>
-                    </div>
-                  ) : uploading ? (
+                  {uploading ? (
                     <div className="flex flex-col items-center gap-3 py-8">
                       <Loader2 className="h-10 w-10 animate-spin text-[#003527]" />
-                      <p className="text-sm text-[#404944] font-semibold">Uploading to Cloudinary...</p>
+                      <p className="text-sm text-[#404944] font-semibold">Uploading images...</p>
                     </div>
                   ) : (
                     <div className="text-center space-y-4">
@@ -373,12 +393,13 @@ export default function AddPropertyWizardPage() {
                         <Upload className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-[#1a1b22]">Upload a cover image</p>
-                        <p className="text-xs text-[#404944] mt-1">PNG, JPG, JPEG up to 5MB</p>
+                        <p className="text-sm font-bold text-[#1a1b22]">Upload property photos</p>
+                        <p className="text-xs text-[#404944] mt-1">Select one or more images (PNG, JPG, JPEG up to 5MB each)</p>
                       </div>
                       <input 
                         type="file" 
                         accept="image/*"
+                        multiple
                         onChange={handleFileChange} 
                         className="hidden" 
                         id="upload-file-input" 
@@ -387,7 +408,7 @@ export default function AddPropertyWizardPage() {
                         htmlFor="upload-file-input"
                         className="inline-block bg-[#003527] text-white px-6 py-2.5 rounded-lg text-sm font-semibold cursor-pointer hover:bg-[#0b513d] transition-colors"
                       >
-                        Select Image
+                        Select Images
                       </label>
                     </div>
                   )}
