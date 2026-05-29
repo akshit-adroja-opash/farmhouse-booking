@@ -3,58 +3,153 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Globe } from 'lucide-react';
+import { 
+  Phone, 
+  Mail, 
+  MapPin, 
+  Clock, 
+  Smartphone, 
+  Camera, 
+  Compass, 
+  Briefcase 
+} from 'lucide-react';
 
-const Logo = ({ className = "h-8 w-8 text-primary" }: { className?: string }) => (
-  <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <rect width="100" height="100" rx="22" fill="#003527" />
-    <path d="M50 25L23 48H33V75H45V60H55V75H67V48H77L50 25Z" fill="#ffffff" />
-    <circle cx="50" cy="38" r="4.5" fill="#95d3ba" />
+const Logo = () => (
+  <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="24" fill="#00a877" />
+    <path d="M50 22L20 48H32V78H46V60H54V78H68V48H80L50 22Z" fill="#ffffff" />
+    <circle cx="50" cy="36" r="5" fill="#fef08a" />
   </svg>
 );
 
 export default function Footer() {
   const pathname = usePathname();
 
-  // Do not render footer on admin or auth routes
-  if (pathname?.startsWith('/admin') || pathname === '/login' || pathname === '/register') {
+  // If we want it to be renderable anywhere, we can remove the pathname check,
+  // but let's keep it clean: if it is explicitly called in admin layout, it will render.
+  // We can just check here if it's auth/admin and return null, OR we can let it render.
+  // Wait, let's allow it to render everywhere, but in pages where it's not needed, we don't render it.
+  // Let's remove the restriction so it can be rendered on admin dashboard page!
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+  if (isAuthPage) {
     return null;
   }
 
   return (
-    <footer className="w-full border-t border-[#bfc9c3]/30 bg-white">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-8 px-6 py-12 md:grid-cols-4 md:px-16 text-sm">
-        <div className="md:col-span-1">
-          <Link className="flex items-center gap-2 font-serif text-xl font-bold text-[#003527] mb-3" href="/">
-            <Logo className="h-6 w-6 grayscale opacity-80" />
-            EstateStay
-          </Link>
-          <p className="text-xs text-[#404944] leading-relaxed">
-            Curating the world's most exceptional rural properties for those who seek tranquility without compromising on luxury.
-          </p>
-          <p className="text-[10px] text-[#707974] mt-4">
-            &copy; 2026 EstateStay Luxury Farmhouses. All rights reserved.
-          </p>
-        </div>
-        <div className="flex flex-col space-y-3 text-[#404944]">
-          <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">Company</h4>
-          <a href="#" className="opacity-80 transition-all hover:text-[#003527] hover:opacity-100">About Us</a>
-          <a href="#" className="opacity-80 transition-all hover:text-[#003527] hover:opacity-100">Sustainability</a>
-          <a href="#" className="opacity-80 transition-all hover:text-[#003527] hover:opacity-100">Contact</a>
-        </div>
-        <div className="flex flex-col space-y-3 text-[#404944]">
-          <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">Legal</h4>
-          <a href="#" className="opacity-80 transition-all hover:text-[#003527] hover:opacity-100">Privacy Policy</a>
-          <a href="#" className="opacity-80 transition-all hover:text-[#003527] hover:opacity-100">Terms of Service</a>
-        </div>
-        <div className="flex flex-col space-y-4 font-semibold text-[#003527]">
-          <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Preferences</h4>
-          <div className="flex items-center space-x-2">
-            <Globe className="h-4 w-4" />
-            <span className="cursor-pointer hover:underline text-xs">English (US)</span>
+    <footer className="w-full bg-[#0b131f] text-white border-t border-gray-800/40">
+      <div className="mx-auto max-w-[1280px] px-6 py-16 md:px-16">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
+          
+          {/* Logo & Description */}
+          <div className="space-y-5">
+            <Link className="flex items-center gap-2.5 font-serif text-2xl font-bold tracking-tight text-white" href="/">
+              <Logo />
+              <span className="font-serif tracking-tight text-white">AgriStay</span>
+            </Link>
+            <p className="text-xs text-gray-400 font-medium leading-relaxed">
+              Discover unique farmhouse experiences across India. Connect with nature, enjoy rural hospitality, and create unforgettable memories.
+            </p>
+            <div className="flex gap-2.5 pt-2">
+              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
+                <Smartphone className="h-4.5 w-4.5" />
+              </span>
+              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
+                <Camera className="h-4.5 w-4.5" />
+              </span>
+              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
+                <Compass className="h-4.5 w-4.5" />
+              </span>
+              <span className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer hover:bg-white/10 transition-all">
+                <Briefcase className="h-4.5 w-4.5" />
+              </span>
+            </div>
           </div>
-          <span className="cursor-pointer hover:underline text-xs">$ USD</span>
+
+          {/* Quick Links */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold text-gray-300 uppercase tracking-widest">
+              Quick Links
+            </h4>
+            <ul className="space-y-2.5 text-xs text-gray-400 font-semibold">
+              <li>
+                <Link href="/" className="hover:text-[#00a877] transition-colors">Home</Link>
+              </li>
+              <li>
+                <Link href="/farms" className="hover:text-[#00a877] transition-colors">Listings</Link>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">About Us</a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">Contact</a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">Blog</a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Popular Destinations */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold text-gray-300 uppercase tracking-widest">
+              Popular Destinations
+            </h4>
+            <ul className="space-y-2.5 text-xs text-gray-400 font-semibold">
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">Manali</a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">Goa</a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">Rishikesh</a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">Munnar</a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[#00a877] transition-colors">Panchgani</a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Details */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold text-gray-300 uppercase tracking-widest">
+              Contact
+            </h4>
+            <ul className="space-y-3.5 text-xs text-gray-400 font-semibold">
+              <li className="flex items-start gap-2.5">
+                <MapPin className="h-4.5 w-4.5 text-[#00a877] mt-0.5" />
+                <span className="leading-relaxed">123 Farm Lane, Green Valley</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Phone className="h-4.5 w-4.5 text-[#00a877]" />
+                <span>+91 98765 43210</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Mail className="h-4.5 w-4.5 text-[#00a877]" />
+                <span>hello@agristay.com</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Clock className="h-4.5 w-4.5 text-[#00a877]" />
+                <span>Mon-Sat: 9AM - 8PM</span>
+              </li>
+            </ul>
+          </div>
+
         </div>
+
+        {/* Bottom bar */}
+        <div className="mt-12 pt-8 border-t border-gray-800/40 flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-gray-500 font-semibold">
+          <p>© 2024 AgriStay. All rights reserved.</p>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+          </div>
+        </div>
+
       </div>
     </footer>
   );

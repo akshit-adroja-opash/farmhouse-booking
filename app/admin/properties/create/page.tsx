@@ -97,7 +97,7 @@ export default function AddPropertyWizardPage() {
           title,
           description,
           location,
-          propertyType,
+          category: propertyType,
           pricePerNight: Number(pricePerNight),
           guests: Number(guests),
           bedrooms: Number(bedrooms),

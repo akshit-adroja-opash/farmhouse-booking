@@ -19,8 +19,8 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "EstateStay - Rural Sophistication",
-  description: "Curated rural retreats for the discerning traveler.",
+  title: "AgriStay - Premium Farmhouse Bookings",
+  description: "Discover and book unique farmhouses across India.",
 };
 
 export default function RootLayout({

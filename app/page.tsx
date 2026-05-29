@@ -1,70 +1,87 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const Logo = ({ className = "h-8 w-8 text-primary" }: { className?: string }) => (
-  <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <rect width="100" height="100" rx="22" fill="#003527" />
-    <path d="M50 25L23 48H33V75H45V60H55V75H67V48H77L50 25Z" fill="#ffffff" />
-    <circle cx="50" cy="38" r="4.5" fill="#95d3ba" />
-  </svg>
-);
+import { useRouter } from 'next/navigation';
+import { 
+  Search, 
+  MapPin, 
+  Users, 
+  Star, 
+  Heart, 
+  ArrowRight,
+  ShieldCheck,
+  PhoneCall,
+  Clock,
+  CircleDollarSign,
+  CalendarCheck2,
+  Smile,
+  Compass,
+  ArrowUpRight
+} from 'lucide-react';
 
 const MOCK_FARMS = [
   {
     _id: '1',
-    title: 'The Vineyard House',
-    location: 'Tuscany, Italy',
-    pricePerNight: 850,
-    images: ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'],
-    description: 'An elegant stone estate nestled among rolling vineyards, featuring a private pool, wine-tasting room, and gourmet kitchen.',
-    category: 'Vineyard',
-    rating: 4.95,
-    guests: 8,
+    title: 'Sunrise Valley Farm',
+    location: 'Mulshi, Maharashtra',
+    pricePerNight: 3500,
+    images: ['https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=800&q=80'],
+    description: 'A quiet valley getaway surrounded by lush greenery, complete with private pool, cozy patio, and traditional home-style cooking.',
+    category: 'farmhouse',
+    rating: 4.8,
+    guests: 12,
     bedrooms: 4,
     baths: 4,
+    amenities: ['WiFi', 'Swimming Pool', 'Kitchen']
   },
   {
     _id: '2',
-    title: 'Villa Serenity',
-    location: 'Provence, France',
-    pricePerNight: 1200,
-    images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80'],
-    description: 'A luxury seaside retreat overlooking the caldera, offering a private infinity pool, panoramic ocean sunsets, and white-glove service.',
-    category: 'Pool',
-    rating: 5.0,
-    guests: 6,
+    title: 'Green Meadow Retreat',
+    location: 'Rishikesh, Uttarakhand',
+    pricePerNight: 2800,
+    images: ['https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=800&q=80'],
+    description: 'Riverside escape offering peace and spirituality. Features a dedicated yoga deck, outdoor dining, and direct river access.',
+    category: 'riverfront',
+    rating: 4.6,
+    guests: 8,
     bedrooms: 3,
-    baths: 3,
+    baths: 2,
+    amenities: ['WiFi', 'Yoga deck', 'River view']
   },
   {
     _id: '3',
-    title: 'Oak Beam Cottage',
-    location: 'Cotswolds, UK',
-    pricePerNight: 450,
-    images: ['https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=800&q=80'],
-    description: 'A historic honey-colored stone cottage with original oak beams, cozy stone fireplace, and a beautiful English country garden.',
-    category: 'Garden',
-    rating: 4.85,
-    guests: 4,
-    bedrooms: 2,
-    baths: 2,
+    title: 'Hilltop Haven',
+    location: 'Manali, Himachal Pradesh',
+    pricePerNight: 5500,
+    images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80'],
+    description: 'Luxury snow-capped peaks cottage featuring an indoor fireplace, heated pool, spacious wood-paneled bedrooms, and local trekking guides.',
+    category: 'cabin',
+    rating: 4.9,
+    guests: 16,
+    bedrooms: 5,
+    baths: 5,
+    amenities: ['WiFi', 'Hot tub', 'Fireplace']
   }
+];
+
+const DESTINATIONS = [
+  { name: 'Manali', state: 'Himachal Pradesh', count: 12, img: 'https://images.unsplash.com/photo-1626621340025-ee97ef3550e2?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Goa', state: 'Goa', count: 18, img: 'https://images.unsplash.com/photo-1540206395-68808572332f?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Rishikesh', state: 'Uttarakhand', count: 10, img: 'https://images.unsplash.com/photo-1614082242765-7c98cdc0d2df?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Munnar', state: 'Kerala', count: 15, img: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Panchgani', state: 'Maharashtra', count: 8, img: 'https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Jaisalmer', state: 'Rajasthan', count: 6, img: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=400&q=80' }
 ];
 
 export default function Home() {
   const { data: session } = useSession() || {};
+  const router = useRouter();
   const [farms, setFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
   const [searchLocation, setSearchLocation] = useState('');
-  const [searchGuests, setSearchGuests] = useState('');
-  const [searchCheckIn, setSearchCheckIn] = useState('');
-  
-  const [filteredFarms, setFilteredFarms] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchFarms() {
@@ -73,28 +90,33 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json();
           if (data && data.length > 0) {
+            // Keep default properties at top, append others
             const formattedFarms = data.map((farm: any) => ({
               ...farm,
-              rating: farm.rating || 4.7 + Math.random() * 0.3,
+              rating: farm.rating || 4.5 + Math.random() * 0.5,
               guests: farm.guests || 6,
               bedrooms: farm.bedrooms || 3,
               baths: farm.baths || 2,
-              category: farm.category || 'Vineyard'
+              category: farm.category || 'farmhouse',
+              amenities: farm.amenities || ['WiFi', 'Kitchen']
             }));
-            setFarms(formattedFarms);
-            setFilteredFarms(formattedFarms);
+            // Merge with mock properties to ensure we always have the specific ones
+            const merged = [...MOCK_FARMS];
+            formattedFarms.forEach((f: any) => {
+              if (!merged.some(m => m.title.toLowerCase() === f.title.toLowerCase())) {
+                merged.push(f);
+              }
+            });
+            setFarms(merged);
           } else {
             setFarms(MOCK_FARMS);
-            setFilteredFarms(MOCK_FARMS);
           }
         } else {
           setFarms(MOCK_FARMS);
-          setFilteredFarms(MOCK_FARMS);
         }
       } catch (err) {
         console.error('Failed to fetch from API, using fallback data:', err);
         setFarms(MOCK_FARMS);
-        setFilteredFarms(MOCK_FARMS);
       } finally {
         setLoading(false);
       }
@@ -102,124 +124,205 @@ export default function Home() {
     fetchFarms();
   }, []);
 
-  useEffect(() => {
-    let result = farms;
-
-    if (searchLocation.trim() !== '') {
-      const locQuery = searchLocation.toLowerCase();
-      result = result.filter(farm => 
-        farm.location.toLowerCase().includes(locQuery) ||
-        farm.title.toLowerCase().includes(locQuery)
-      );
-    }
-
-    if (searchGuests.trim() !== '') {
-      const minGuests = parseInt(searchGuests, 10);
-      if (!isNaN(minGuests)) {
-        result = result.filter(farm => farm.guests >= minGuests);
-      }
-    }
-
-    setFilteredFarms(result);
-  }, [searchLocation, searchGuests, farms]);
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const element = document.getElementById('listings');
-    element?.scrollIntoView({ behavior: 'smooth' });
+    if (searchLocation.trim()) {
+      router.push(`/farms?location=${encodeURIComponent(searchLocation.trim())}`);
+    } else {
+      router.push('/farms');
+    }
   };
 
-  const isAdmin = session?.user && (session.user as any).role === 'admin';
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFavorites(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
 
   return (
-    <div className="bg-background text-on-surface pt-20">
-      <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center bg-surface-variant">
+    <div className="bg-[#fdfbf7] text-[#1a1b22] pt-20">
+      
+      {/* Hero Section */}
+      <section className="relative h-[80vh] min-h-[580px] flex items-center justify-center bg-[#f4f2fd]/50">
         <div className="absolute inset-0 z-0">
           <img
-            alt="Luxurious modern farmhouse villa"
-            className="w-full h-full object-cover"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtHN65TmjaePBeXGJiQ-xbmOtsFA_0d9Fhm4nvmMfqcklf27q1g8ZPyihPvtTQbfWpCHwXNysGBFggN_p6YYsx5g9etgc7T-2IsSARaRa2GmVo-mbKYdmExaRiWeJT_-MQwM-IlIMn4aHvdFn-x1PtuiAqOA3ODSXKXQTkzMlbgZkb0AZ2ewgB_HjpegJoDkJeHysvIcmakxYVYdBwQiJQsllhi_43CzSYMxzq16_VMbZQOdUmRYGj59_WjN3Z1wD4cwnLJ3-sH_bk"
+            alt="Scenic countryside golden hour background"
+            className="w-full h-full object-cover brightness-[0.85]"
+            src="https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1920&q=80"
           />
-          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
+        </div>
+
+        <div className="relative z-10 max-w-[1280px] w-full mx-auto px-6 md:px-16 text-white flex flex-col items-start gap-6">
+          
+          {/* Yellow Badge */}
+          <div className="inline-flex items-center gap-1.5 bg-[#eab308]/20 border border-[#eab308]/40 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-[#fef08a] tracking-wide animate-fade-in shadow-sm">
+            <Compass className="h-3.5 w-3.5" />
+            <span>India's #1 Farmhouse Platform</span>
+          </div>
+
+          {/* Heading */}
+          <h1 className="font-serif text-4xl md:text-6xl font-normal leading-[1.1] tracking-tight max-w-2xl">
+            Find Your Perfect <br />
+            <span className="font-serif font-semibold text-[#10b981]">Farmhouse</span> Escape
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-sm md:text-lg text-gray-200 max-w-xl font-medium leading-relaxed drop-shadow-sm">
+            Discover unique farmhouses, connect with nature, and create unforgettable memories across India's most beautiful destinations.
+          </p>
+
+          {/* Search bar */}
+          <form 
+            onSubmit={handleSearchSubmit} 
+            className="flex items-center bg-white rounded-full p-2.5 shadow-xl w-full max-w-xl mt-4 border border-[#bfc9c3]/30"
+          >
+            <div className="flex items-center gap-3 flex-1 pl-4">
+              <MapPin className="h-5 w-5 text-[#003527]" />
+              <input
+                type="text"
+                placeholder="Where do you want to go?"
+                className="w-full bg-transparent text-[#1a1b22] placeholder-gray-400 outline-none text-sm font-semibold border-none"
+                value={searchLocation}
+                onChange={(e) => setSearchLocation(e.target.value)}
+              />
+            </div>
+            <button 
+              type="submit"
+              className="bg-[#003527] hover:bg-[#064e3b] text-white rounded-full px-6 py-3 font-semibold text-sm flex items-center gap-2 transition-all"
+            >
+              <Search className="h-4 w-4" />
+              <span>Search</span>
+            </button>
+          </form>
+
+          {/* Stats Bar */}
+          <div className="grid grid-cols-3 gap-6 md:gap-12 mt-10 w-full max-w-lg border-t border-white/20 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-[#10b981]/20 backdrop-blur-md flex items-center justify-center text-[#10b981]">
+                <Compass className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-lg md:text-xl font-bold font-serif leading-none">500+</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-gray-300 mt-1">Farmhouses</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-[#10b981]/20 backdrop-blur-md flex items-center justify-center text-[#10b981]">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-lg md:text-xl font-bold font-serif leading-none">50K+</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-gray-300 mt-1">Happy Guests</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-[#10b981]/20 backdrop-blur-md flex items-center justify-center text-[#10b981]">
+                <Star className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-lg md:text-xl font-bold font-serif leading-none">4.8</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-gray-300 mt-1">Avg Rating</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
-      <section id="listings" className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-16">
+      {/* Featured Farmhouses Section */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-16 py-20">
         <div className="mb-10 flex justify-between items-end">
           <div>
-            <h2 className="font-display-lg text-3xl text-gray-900 mb-2 font-serif">Featured Stays</h2>
-            <p className="font-body-lg text-body-lg text-secondary">
-              Curated rural retreats for the discerning traveler.
-            </p>
+            <h2 className="font-serif text-3xl font-semibold text-[#003527]">Featured Farmhouses</h2>
+            <p className="text-sm text-[#404944] mt-1.5 font-medium">Hand-picked properties for the perfect getaway.</p>
           </div>
-          <Link className="hidden md:flex items-center gap-1 font-label-md text-label-md text-primary hover:text-primary-container transition-colors" href="/farms">
-            View all <span className="material-symbols-outlined text-sm">arrow_forward</span>
+          <Link 
+            className="flex items-center gap-1 text-sm font-bold text-[#003527] hover:text-[#064e3b] transition-all" 
+            href="/farms"
+          >
+            <span>View All</span>
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <span className="material-symbols-outlined text-5xl text-primary animate-spin">sync</span>
-            <p className="text-secondary font-medium">Curating retreats for you...</p>
-          </div>
-        ) : filteredFarms.length === 0 ? (
-          <div className="text-center py-20 bg-white border border-gray-100 rounded-lg p-8 max-w-md mx-auto shadow-sm">
-            <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">search_off</span>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No retreats match your criteria</h3>
-            <p className="text-secondary text-sm mb-6">Try refining your search parameters to view full listings.</p>
-            <button
-              onClick={() => { setSearchLocation(''); setSearchGuests(''); setSearchCheckIn(''); }}
-              className="bg-primary text-on-primary px-6 py-2.5 rounded-md font-label-md text-label-md hover:bg-primary-container transition-colors"
-            >
-              Reset Search
-            </button>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#003527] border-t-transparent"></div>
+            <p className="text-sm text-[#404944] font-semibold">Loading stays...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-            {filteredFarms.map((farm) => {
-              const isMockPrice = farm.pricePerNight < 5000;
-              const formattedPrice = isMockPrice 
-                ? `$${farm.pricePerNight.toLocaleString('en-US')}` 
-                : `₹${farm.pricePerNight.toLocaleString('en-IN')}`;
-
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {farms.slice(0, 3).map((farm) => {
+              const isFav = favorites.includes(farm._id);
               return (
                 <Link
                   key={farm._id}
                   href={`/farms/${farm._id}`}
-                  className="bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm hover-lift group cursor-pointer flex flex-col h-full"
+                  className="bg-white rounded-2xl overflow-hidden border border-[#bfc9c3]/15 shadow-sm hover-lift group cursor-pointer flex flex-col h-full"
                 >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden">
+                  {/* Image & Badges */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
                     <img
-                      src={farm.images?.[0] || 'https://via.placeholder.com/600x400?text=Premium+Farmhouse'}
+                      src={farm.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'}
                       alt={farm.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute top-4 right-4 bg-white/95 px-3 py-1 rounded-full border border-gray-100 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-yellow-500 text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        star
-                      </span>
+                    
+                    {/* Featured Tag */}
+                    <div className="absolute top-4 left-4 bg-[#10b981] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
+                      Featured
+                    </div>
+
+                    {/* Favorite Heart Button */}
+                    <button 
+                      onClick={(e) => toggleFavorite(farm._id, e)}
+                      className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full border border-gray-100 shadow-sm text-gray-500 hover:text-red-500 transition-colors"
+                    >
+                      <Heart className={`h-4 w-4 ${isFav ? 'fill-red-500 text-red-500' : ''}`} />
+                    </button>
+
+                    {/* Rating Badge */}
+                    <div className="absolute bottom-4 right-4 bg-white/95 px-2.5 py-1 rounded-full border border-gray-100 flex items-center gap-1 shadow-sm">
+                      <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
                       <span className="text-xs font-bold text-gray-800">
-                        {farm.rating?.toFixed(2) || '4.90'}
+                        {farm.rating?.toFixed(1) || '4.8'}
                       </span>
                     </div>
                   </div>
 
+                  {/* Info details */}
                   <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="font-display-lg text-lg text-gray-900 mb-1 font-serif">
-                      {farm.title}
-                    </h3>
-                    
-                    <div className="text-sm text-gray-500 mb-4 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">location_on</span>
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 mb-2">
+                      <MapPin className="h-3 w-3 text-gray-400" />
                       <span>{farm.location}</span>
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                      <p className="text-gray-900 font-bold">
-                        {formattedPrice} <span className="text-gray-500 font-normal">/ night</span>
-                      </p>
-                      <span className="text-xs text-gray-600 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded">
-                        {farm.category}
+                    <h3 className="font-serif text-lg font-semibold text-[#1a1b22] group-hover:text-[#003527] transition-colors mb-2">
+                      {farm.title}
+                    </h3>
+                    
+                    {/* Amenities tags */}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {farm.amenities?.map((amenity: string, idx: number) => (
+                        <span key={idx} className="text-[10px] font-bold text-[#404944] bg-[#e3e1ec]/30 px-2 py-0.5 rounded border border-[#bfc9c3]/20">
+                          {amenity}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Price & guest count */}
+                    <div className="flex items-center justify-between pt-4 border-t border-[#bfc9c3]/15 mt-auto">
+                      <div>
+                        <span className="text-lg font-bold text-[#003527]">
+                          ₹{(farm.pricePerNight || 3000).toLocaleString('en-IN')}
+                        </span>
+                        <span className="text-xs text-gray-500 font-normal"> / night</span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-[#404944] bg-[#bfc9c3]/10 px-2.5 py-1 rounded-md">
+                        {farm.guests || 6} guests
                       </span>
                     </div>
                   </div>
@@ -230,81 +333,207 @@ export default function Home() {
         )}
       </section>
 
-      <section className="bg-surface-container-low py-16 border-t border-outline-variant/30">
-        <div className="max-w-container-max mx-auto px-margin-desktop">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-display-lg text-3xl text-gray-900 mb-4 font-serif">
-              Why EstateStay?
+      {/* Popular Destinations */}
+      <section className="bg-[#f7f5ef] border-y border-[#bfc9c3]/20 py-20">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-16">
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <h2 className="font-serif text-3xl font-semibold text-[#003527]">Popular Destinations</h2>
+            <p className="text-sm text-[#404944] mt-2 font-medium">Explore farmhouses in India's most loved destinations.</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
+            {DESTINATIONS.map((dest, idx) => (
+              <Link 
+                key={idx}
+                href={`/farms?location=${encodeURIComponent(dest.name)}`}
+                className="group relative h-48 rounded-2xl overflow-hidden shadow-sm cursor-pointer flex flex-col justify-end p-4 hover-lift"
+              >
+                <div className="absolute inset-0 z-0">
+                  <img src={dest.img} alt={dest.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                </div>
+
+                <div className="relative z-10 text-white">
+                  <span className="bg-white/20 backdrop-blur-sm text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/20">
+                    {dest.count} Farms
+                  </span>
+                  <h3 className="font-serif text-base font-semibold mt-2">{dest.name}</h3>
+                  <p className="text-[10px] text-gray-300 font-medium">{dest.state}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-16 py-20">
+        <div className="text-center max-w-xl mx-auto mb-16">
+          <h2 className="font-serif text-3xl font-semibold text-[#003527]">How It Works</h2>
+          <p className="text-sm text-[#404944] mt-2 font-medium">Book your farmhouse in 3 simple steps.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          {[
+            { 
+              step: '1', 
+              title: 'Search & Discover', 
+              desc: 'Browse through hundreds of unique farmhouses across India.',
+              icon: Search
+            },
+            { 
+              step: '2', 
+              title: 'Book & Pay', 
+              desc: 'Select your dates, make advance payment securely.',
+              icon: CalendarCheck2
+            },
+            { 
+              step: '3', 
+              title: 'Enjoy & Relax', 
+              desc: 'Arrive at your farmhouse and enjoy a memorable stay.',
+              icon: Smile
+            }
+          ].map((item, idx) => (
+            <div key={idx} className="flex flex-col items-center text-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <div className="h-14 w-14 rounded-full bg-[#e6f4ea] flex items-center justify-center text-[#003527] mb-6 relative">
+                <item.icon className="h-6 w-6" />
+                <span className="absolute -top-1 -right-1 bg-[#10b981] text-white text-xs font-bold h-6 w-6 rounded-full flex items-center justify-center shadow-sm">
+                  {item.step}
+                </span>
+              </div>
+              <h3 className="font-serif text-lg font-semibold text-[#1a1b22] mb-3">{item.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed font-medium">
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Why Choose AgriStay Section */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-16 pb-20">
+        <div className="bg-[#003527] text-white rounded-3xl p-10 md:p-16 relative overflow-hidden shadow-lg shadow-[#064e3b]/10">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] rounded-full bg-[#064e3b] opacity-20 blur-3xl"></div>
+            <div className="absolute bottom-[-50%] right-[-20%] w-[800px] h-[800px] rounded-full bg-[#10b981]/20 opacity-20 blur-3xl"></div>
+          </div>
+
+          <div className="relative z-10">
+            <div className="text-center max-w-xl mx-auto mb-14">
+              <h2 className="font-serif text-3xl font-normal">Why Choose AgriStay</h2>
+              <p className="text-sm text-emerald-200 mt-2 font-medium">The best farmhouse booking experience</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: 'Secure Booking', desc: 'SSL encrypted payments, holistic protection.', icon: ShieldCheck },
+                { title: '24/7 Support', desc: 'Round-the-clock customer assistance.', icon: Clock },
+                { title: 'Best Prices', desc: 'Competitive rates and no hidden charges.', icon: CircleDollarSign },
+                { title: 'Verified Properties', desc: 'All properties are verified by our team.', icon: ShieldCheck }
+              ].map((card, idx) => (
+                <div key={idx} className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/15 transition-colors">
+                  <div className="h-10 w-10 rounded-lg bg-[#10b981]/20 flex items-center justify-center text-[#10b981] mb-5">
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-bold mb-2 tracking-tight">{card.title}</h3>
+                  <p className="text-xs text-emerald-200 leading-relaxed font-medium">{card.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="bg-[#f7f5ef] border-t border-[#bfc9c3]/20 py-20">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-16">
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <h2 className="font-serif text-3xl font-semibold text-[#003527]">What Our Guests Say</h2>
+            <p className="text-sm text-[#404944] mt-2 font-medium">Real reviews from real guests.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                name: 'Priya Sharma',
+                role: 'Homemaker',
+                text: 'AgriStay made our family vacation absolutely memorable. The farmhouse was exactly as described, and the host was wonderful!',
+                img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'
+              },
+              {
+                name: 'Rajesh Kumar',
+                role: 'Owner',
+                text: 'As a farmhouse owner, AgriStay has helped me reach customers across India. The platform is easy to use and the support team is great.',
+                img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
+              },
+              {
+                name: 'Ankit Verma',
+                role: 'HR Manager',
+                text: "I've been using AgriStay for corporate retreats. The variety of properties and ease of booking makes it our go-to platform.",
+                img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80'
+              }
+            ].map((test, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-8 border border-[#bfc9c3]/15 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex gap-0.5 text-yellow-500 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-500" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-[#404944] leading-relaxed italic font-medium">
+                    "{test.text}"
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-100">
+                  <img src={test.img} alt={test.name} className="h-10 w-10 rounded-full object-cover" />
+                  <div>
+                    <h4 className="text-sm font-bold text-[#1a1b22]">{test.name}</h4>
+                    <p className="text-[10px] text-gray-500 font-semibold">{test.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer CTA */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-16 py-20">
+        <div className="bg-[#003527] text-white rounded-3xl p-10 md:p-16 relative overflow-hidden text-center flex flex-col items-center gap-6 shadow-lg shadow-[#064e3b]/10">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] rounded-full bg-[#064e3b] opacity-20 blur-3xl"></div>
+            <div className="absolute bottom-[-50%] right-[-20%] w-[800px] h-[800px] rounded-full bg-[#10b981]/20 opacity-20 blur-3xl"></div>
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center gap-4">
+            <h2 className="font-serif text-3xl font-normal leading-tight max-w-xl">
+              Ready for Your Farmhouse Adventure?
             </h2>
-            <p className="font-body-lg text-body-lg text-secondary">
-              We design escape routes from the fast lane. Every location in our portfolio is chosen with design, nature, and serenity in mind.
+            <p className="text-sm text-emerald-200 max-w-md font-medium">
+              Join thousands of happy travelers and discover the perfect farmhouse for your next getaway.
             </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            <div className="flex flex-col items-center text-center p-8 bg-white rounded-lg border border-gray-100 shadow-sm hover-lift">
-              <div className="h-16 w-16 bg-[#003527]/5 rounded-full flex items-center justify-center text-primary mb-6">
-                <span className="material-symbols-outlined text-3xl text-[#003527]">verified</span>
-              </div>
-              <h3 className="font-display-lg text-lg text-gray-900 mb-3 font-serif">Verified Excellence</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Each listing is physically audited for structural beauty, pristine sanitation, premium bedding, and reliable backup utilities.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center p-8 bg-white rounded-lg border border-gray-100 shadow-sm hover-lift">
-              <div className="h-16 w-16 bg-[#003527]/5 rounded-full flex items-center justify-center text-primary mb-6">
-                <span className="material-symbols-outlined text-3xl text-[#003527]">restaurant</span>
-              </div>
-              <h3 className="font-display-lg text-lg text-gray-900 mb-3 font-serif">Hyper-Local Experiences</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Enjoy customized packages containing private vineyard tours, locally sourced farm-to-table breakfast, and guided wilderness safaris.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center p-8 bg-white rounded-lg border border-gray-100 shadow-sm hover-lift">
-              <div className="h-16 w-16 bg-[#003527]/5 rounded-full flex items-center justify-center text-primary mb-6">
-                <span className="material-symbols-outlined text-3xl text-[#003527]">concierge</span>
-              </div>
-              <h3 className="font-display-lg text-lg text-gray-900 mb-3 font-serif">Dedicated Concierge</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                From check-in coordinates to organizing private dinners, our on-call guest experience hosts are at your service 24/7.
-              </p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-6">
+              <Link 
+                href="/farms" 
+                className="bg-white text-[#003527] hover:bg-emerald-50 px-8 py-3.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
+              >
+                <span>Browse Farmhouses</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <a 
+                href="tel:+919876543210"
+                className="bg-transparent border border-white/30 hover:border-white/60 text-white px-8 py-3.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+              >
+                <PhoneCall className="h-4 w-4" />
+                <span>+91 98765 43210</span>
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-[#003527] text-on-primary py-16 relative overflow-hidden mb-12">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] rounded-full bg-[#064e3b] opacity-20 blur-3xl"></div>
-          <div className="absolute bottom-[-50%] right-[-20%] w-[800px] h-[800px] rounded-full bg-surface-tint opacity-20 blur-3xl"></div>
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center px-margin-mobile">
-          <h2 className="font-display-lg text-3xl text-white mb-4 font-serif">
-            Receive Curated Offers
-          </h2>
-          <p className="text-sm text-emerald-200 max-w-xl mb-8 leading-relaxed">
-            Subscribe to receive priority notifications on newly added estates, seasonal discount vouchers, and gourmet escape itineraries.
-          </p>
-
-          <form onSubmit={(e) => { e.preventDefault(); alert('Thank you for subscribing!'); }} className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-emerald-300 text-sm rounded px-5 py-3.5 focus:outline-none focus:border-white/40 flex-grow"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-white text-[#003527] font-semibold py-3.5 px-6 rounded hover:bg-emerald-100 transition-colors text-sm"
-            >
-              Subscribe
-            </button>
-          </form>
-        </div>
-      </section>
     </div>
   );
 }
