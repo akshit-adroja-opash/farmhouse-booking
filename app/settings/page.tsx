@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { data: session } = useSession() || {};
+  const { data: session, update } = useSession() || {};
   const role = (session?.user as any)?.role || 'customer';
 
   // Toggle View/Edit modes
@@ -93,6 +93,13 @@ export default function SettingsPage() {
         setPhone(updated.phone || '');
         setLocation(updated.location || '');
         setIsEditing(false);
+        if (update) {
+          await update({
+            name: updated.name,
+            email: updated.email,
+            image: updated.image || image
+          });
+        }
         alert('Profile changes saved successfully!');
       } else {
         const errData = await res.json();
@@ -135,6 +142,11 @@ export default function SettingsPage() {
 
       if (profileRes.ok) {
         setImage(data.url);
+        if (update) {
+          await update({
+            image: data.url
+          });
+        }
         alert('Profile picture updated successfully!');
       } else {
         alert('Failed to update profile picture URL in database.');

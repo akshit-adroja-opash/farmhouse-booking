@@ -8,7 +8,6 @@ import {
   Search, 
   MapPin, 
   Users, 
-  Star, 
   Heart, 
   Bed, 
   Compass, 
@@ -580,16 +579,7 @@ function StaysList() {
                       <Heart className={`h-4 w-4 ${isFav ? 'fill-red-500 text-red-500' : ''}`} />
                     </button>
 
-                    {/* Rating Badge */}
-                    <div className="absolute bottom-4 right-4 bg-white/95 px-2.5 py-1 rounded-full border border-gray-100 flex items-center gap-1 shadow-sm">
-                      <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                      <span className="text-xs font-bold text-gray-800">
-                        {farm.rating?.toFixed(1) || '4.8'}
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-semibold">
-                        ({farm.reviewsCount || 100})
-                      </span>
-                    </div>
+
                   </div>
 
                   {/* Staying info details */}

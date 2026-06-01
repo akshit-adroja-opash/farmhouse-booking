@@ -5,9 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { 
   MapPin, 
-  Star, 
-  Share2, 
-  Heart, 
   Grid, 
   Wifi, 
   Snowflake, 
@@ -20,7 +17,8 @@ import {
   Compass,
   Sparkles,
   Users,
-  Bed
+  Bed,
+  X
 } from 'lucide-react';
 
 interface FarmDetails {
@@ -50,7 +48,9 @@ const MOCK_FARMS_DETAILS: Record<string, FarmDetails> = {
       'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80'
     ],
     description: 'A quiet valley getaway surrounded by lush hills. Traditional architecture meets contemporary amenities. Enjoy organic farm-to-table meals, bonfire nights under stars, and private guided trails.',
     amenities: ['WiFi', 'Swimming Pool', 'Garden', 'Kitchen', 'Parking'],
@@ -70,7 +70,9 @@ const MOCK_FARMS_DETAILS: Record<string, FarmDetails> = {
       'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=1200&q=80'
+      'https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'
     ],
     description: 'Luxury snow-capped peaks cottage featuring an indoor fireplace, heated pool, spacious wood-paneled bedrooms, and local trekking guides. Breathtaking panoramas guaranteed.',
     amenities: ['WiFi', 'Hot Tub', 'Fireplace', 'Mountain View', 'Kitchen'],
@@ -90,7 +92,9 @@ const MOCK_FARMS_DETAILS: Record<string, FarmDetails> = {
       'https://images.unsplash.com/photo-1540206395-68808572332f?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80'
+      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=600&q=80'
     ],
     description: 'A modern coastal sanctuary just steps from pristine beaches. Private decks, landscaped palm gardens, and beach access pathways offer absolute seclusion.',
     amenities: ['WiFi', 'Beach Access', 'Swimming Pool', 'Ocean View', 'AC'],
@@ -133,8 +137,8 @@ export default function FarmDetailPage() {
   const [endDate, setEndDate] = useState('');
   const [guestSelection, setGuestSelection] = useState(0);
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [existingBookings, setExistingBookings] = useState<any[]>([]);
+  const [showAllPhotosModal, setShowAllPhotosModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -210,51 +214,25 @@ export default function FarmDetailPage() {
   }, [farm]);
 
   useEffect(() => {
-    async function checkIsSaved() {
-      if (session?.user && farm) {
-        try {
-          const userId = (session.user as any).id;
-          const res = await fetch(`/api/users/favorites?userId=${userId}`);
-          if (res.ok) {
-            const favoritesList = await res.json();
-            const saved = favoritesList.some((fav: any) => fav._id === farm._id);
-            setIsSaved(saved);
-          }
-        } catch (err) {
-          console.error('Failed to fetch user favorites:', err);
-        }
-      }
+    if (showAllPhotosModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-    checkIsSaved();
-  }, [session, farm]);
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showAllPhotosModal]);
 
-  const handleSaveToggle = async () => {
-    if (!session?.user) {
-      alert('Please sign in to save farmhouses to your favorites.');
-      router.push('/login');
-      return;
-    }
-    if (!farm) return;
-    try {
-      const userId = (session.user as any).id;
-      const res = await fetch('/api/users/favorites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, farmId: farm._id })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const saved = data.favorites.includes(farm._id);
-        setIsSaved(saved);
-      } else {
-        const errorData = await res.json();
-        alert(errorData.error || 'Failed to toggle favorite.');
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowAllPhotosModal(false);
       }
-    } catch (err) {
-      console.error('Error toggling favorite:', err);
-      alert('Failed to update favorites.');
-    }
-  };
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (loading) {
     return (
@@ -399,35 +377,10 @@ export default function FarmDetailPage() {
         {/* Title & Metadata */}
         <div className="my-8">
           <h1 className="font-serif text-3xl font-semibold text-[#003527] md:text-5xl mb-2">{farm.title}</h1>
-          <div className="flex flex-col gap-2 text-sm text-[#404944] sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <MapPin className="h-4 w-4 text-[#10b981]" />
               <span className="font-medium">{farm.location}</span>
-              <span className="hidden sm:inline">·</span>
-              <span className="flex items-center gap-1 font-bold">
-                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" /> 
-                <span>{farm.rating?.toFixed(1) || '4.8'}</span>
-                <span className="text-gray-400 font-semibold">({farm.reviewsCount || 100} reviews)</span>
-              </span>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied to clipboard!'); }}
-                className="flex items-center space-x-2 text-sm font-semibold underline transition-colors hover:text-[#003527]"
-              >
-                <Share2 className="h-4 w-4" />
-                <span>Share</span>
-              </button>
-              <button 
-                onClick={handleSaveToggle}
-                className="flex items-center space-x-2 text-sm font-semibold underline transition-colors hover:text-[#003527]"
-              >
-                <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
-                <span>{isSaved ? 'Saved' : 'Save'}</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Bento Grid Photo Gallery */}
@@ -459,10 +412,15 @@ export default function FarmDetailPage() {
               alt="Scenery gardens" 
               className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
             />
-            <button className="absolute bottom-4 right-4 flex items-center space-x-2 rounded-xl border border-[#bfc9c3] bg-white px-4 py-2 text-sm font-bold text-[#003527] shadow-sm transition-colors hover:bg-gray-50">
-              <Grid className="h-4 w-4" />
-              <span>Show all photos</span>
-            </button>
+            {farm.images && farm.images.length > 4 && (
+              <button 
+                onClick={() => setShowAllPhotosModal(true)}
+                className="absolute bottom-4 right-4 flex items-center space-x-2 rounded-xl border border-[#bfc9c3] bg-white px-4 py-2 text-sm font-bold text-[#003527] shadow-sm transition-colors hover:bg-gray-50"
+              >
+                <Grid className="h-4 w-4" />
+                <span>Show all photos</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -531,10 +489,6 @@ export default function FarmDetailPage() {
                     ₹{(farm.pricePerNight || 3000).toLocaleString('en-IN')}
                   </span>
                   <span className="text-sm text-gray-500"> / night</span>
-                </div>
-                <div className="flex items-center text-xs font-bold text-gray-600">
-                  <Star className="h-4 w-4 fill-yellow-500 text-yellow-500 mr-1" />
-                  <span>{farm.rating?.toFixed(1) || '4.8'}</span>
                 </div>
               </div>
 
@@ -624,6 +578,45 @@ export default function FarmDetailPage() {
 
         </div>
       </main>
+      {/* Full-screen Photo Gallery Modal */}
+      {showAllPhotosModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-95 backdrop-blur-md flex flex-col transition-all duration-300">
+          {/* Header */}
+          <div className="sticky top-0 z-10 flex items-center justify-between bg-black/60 backdrop-blur-md px-6 py-4 border-b border-white/10 text-white">
+            <div>
+              <h2 className="font-serif text-lg md:text-xl font-bold">{farm.title}</h2>
+              <p className="text-xs text-gray-400 font-medium mt-0.5">
+                {farm.images?.length || 0} photo{farm.images?.length && farm.images.length > 1 ? 's' : ''}
+              </p>
+            </div>
+            <button 
+              onClick={() => setShowAllPhotosModal(false)}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors focus:outline-none"
+              aria-label="Close photo gallery"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Grid Container */}
+          <div className="max-w-[1000px] w-full mx-auto px-6 py-12 flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {farm.images?.map((imgUrl, index) => (
+                <div key={index} className="overflow-hidden rounded-2xl aspect-[4/3] bg-neutral-900 border border-white/5 group relative shadow-md">
+                  <img 
+                    src={imgUrl} 
+                    alt={`${farm.title} photo ${index + 1}`} 
+                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
+                  <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold border border-white/10">
+                    {index + 1} / {farm.images.length}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

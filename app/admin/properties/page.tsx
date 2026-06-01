@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Bath, BedDouble, Home, MapPin, Plus, Search, Users, Star } from 'lucide-react';
+import { Bath, BedDouble, Home, MapPin, Plus, Search, Users } from 'lucide-react';
 
 type Farm = {
   _id: string;
@@ -199,10 +199,6 @@ export default function AdminPropertiesPage() {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold bg-[#e6f4ea] text-[#0f766e] border border-[#a7f3d0]/30 rounded-full lowercase">
                         {farm.category || 'Farmhouse'}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs font-bold text-gray-700">
-                        <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                        {farm.rating || 4.8}
                       </span>
                     </div>
                     <h3 className="mt-3 font-serif text-xl font-bold text-[#1a1b22]">{farm.title}</h3>

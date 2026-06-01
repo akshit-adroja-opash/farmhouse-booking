@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Download, HelpCircle, ArrowRight, Heart, Star, MapPin, Users, Bath, Home } from 'lucide-react';
+import { Calendar, Download, HelpCircle, ArrowRight, Heart, MapPin, Users, Bath, Home } from 'lucide-react';
 
 interface Farm {
   _id: string;
@@ -455,10 +455,6 @@ export default function BookingsDashboardPage() {
                               <h3 className="font-serif text-xl font-bold text-[#1a1b22] line-clamp-1">
                                 {farm.title}
                               </h3>
-                              <span className="flex items-center gap-1 text-xs font-bold text-gray-700 whitespace-nowrap mt-1">
-                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                                {farm.rating?.toFixed(1) || '4.8'}
-                              </span>
                             </div>
                             <p className="mt-1 flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-wide">
                               <MapPin className="h-3.5 w-3.5 text-[#00a877]" />
